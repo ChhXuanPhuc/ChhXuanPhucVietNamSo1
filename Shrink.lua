@@ -45,6 +45,8 @@ end
 local espButton = createToggleButton("ESP", 0.35)
 local flyButton = createToggleButton("Fly", 0.65)
 local invisButton = createToggleButton("Invisible", 0.95)
+local ghostButton = createToggleButton("Ghost", 1.25)
+frame.Size = UDim2.new(0, 220, 0, 220) -- tăng chiều cao menu
 
 -- ESP
 local ESPEnabled = false
