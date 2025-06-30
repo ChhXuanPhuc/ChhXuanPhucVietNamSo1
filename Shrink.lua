@@ -175,3 +175,40 @@ invisButton.MouseButton1Click:Connect(function()
 	invisButton.BackgroundColor3 = invisible and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(50, 50, 50)
 	setInvisible(invisible)
 end)
+local ghost = false
+local originalSize = {}
+
+local function setGhostMode(state)
+	local char = LocalPlayer.Character
+	if not char then return end
+
+	for _, part in pairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			if state then
+				originalSize[part] = part.Size
+				part.Size = Vector3.new(0.1, 0.1, 0.1)
+				part.Transparency = 1
+				part.CanCollide = false
+			else
+				if originalSize[part] then
+					part.Size = originalSize[part]
+				end
+				part.Transparency = 0
+				part.CanCollide = true
+			end
+		elseif part:IsA("Accessory") or part:IsA("Hat") then
+			if state then
+				part:Destroy()
+			end
+		elseif part:IsA("Decal") then
+			part.Transparency = 1
+		end
+	end
+end
+
+ghostButton.MouseButton1Click:Connect(function()
+	ghost = not ghost
+	ghostButton.Text = "Ghost: " .. (ghost and "ON" or "OFF")
+	ghostButton.BackgroundColor3 = ghost and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(50, 50, 50)
+	setGhostMode(ghost)
+end)
