@@ -141,3 +141,35 @@ flyButton.MouseButton1Click:Connect(function()
 		stopFly()
 	end
 end)
+local invisible = false
+local originalTransparency = {}
+
+local function setInvisible(state)
+	local char = LocalPlayer.Character
+	if not char then return end
+
+	for _, part in pairs(char:GetDescendants()) do
+		if part:IsA("BasePart") or part:IsA("Decal") then
+			if state then
+				originalTransparency[part] = part.Transparency
+				part.Transparency = 1
+				if part:IsA("Decal") then
+					part.Transparency = 1
+				end
+			else
+				if originalTransparency[part] ~= nil then
+					part.Transparency = originalTransparency[part]
+				else
+					part.Transparency = 0
+				end
+			end
+		end
+	end
+end
+
+invisButton.MouseButton1Click:Connect(function()
+	invisible = not invisible
+	invisButton.Text = "Invisible: " .. (invisible and "ON" or "OFF")
+	invisButton.BackgroundColor3 = invisible and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(50, 50, 50)
+	setInvisible(invisible)
+end)
