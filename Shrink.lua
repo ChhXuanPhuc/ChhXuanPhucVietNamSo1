@@ -212,3 +212,11 @@ ghostButton.MouseButton1Click:Connect(function()
 	ghostButton.BackgroundColor3 = ghost and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(50, 50, 50)
 	setGhostMode(ghost)
 end)
+task.spawn(function()
+	while true do
+		if ESPEnabled then
+			updateESP()
+		end
+		task.wait(1) -- mỗi 1 giây sẽ refresh lại
+	end
+end)
