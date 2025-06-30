@@ -50,23 +50,19 @@ local ESPEnabled = false
 
 local function updateESP()
 	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
 			if ESPEnabled then
-				if not player.Character.Head:FindFirstChild("ESPTag") then
-					local esp = Instance.new("BillboardGui", player.Character.Head)
-					esp.Name = "ESPTag"
-					esp.Size = UDim2.new(0, 100, 0, 20)
-					esp.AlwaysOnTop = true
-					local text = Instance.new("TextLabel", esp)
-					text.Size = UDim2.new(1, 0, 1, 0)
-					text.BackgroundTransparency = 1
-					text.Text = player.Name
-					text.TextColor3 = Color3.new(1, 1, 0)
-					text.TextScaled = true
+				if not player.Character:FindFirstChild("FullHighlight") then
+					local hl = Instance.new("Highlight", player.Character)
+					hl.Name = "FullHighlight"
+					hl.FillColor = Color3.fromRGB(255, 0, 0) -- đỏ
+					hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+					hl.FillTransparency = 0.3
+					hl.OutlineTransparency = 0
 				end
 			else
-				if player.Character.Head:FindFirstChild("ESPTag") then
-					player.Character.Head.ESPTag:Destroy()
+				if player.Character:FindFirstChild("FullHighlight") then
+					player.Character.FullHighlight:Destroy()
 				end
 			end
 		end
