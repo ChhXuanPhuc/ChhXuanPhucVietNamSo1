@@ -10,7 +10,7 @@ gui.Name = "ShrinkESP_UIv2"
 
 local frame = Instance.new("Frame", gui)
 frame.Position = UDim2.new(0, 20, 0, 100)
-frame.Size = UDim2.new(0, 220, 0, 150)
+frame.Size = UDim2.new(0, 220, 0, 250)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 frame.BackgroundTransparency = 0.05
 frame.Active = true
