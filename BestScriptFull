@@ -148,3 +148,23 @@ closeBtn.MouseButton1Click:Connect(function()
 	visible = false
 	main.Visible = false
 end)
+local infAmmoBtn = createButton("Vô hạn đạn: BẬT", 280)
+local infAmmo = false
+
+infAmmoBtn.MouseButton1Click:Connect(function()
+    infAmmo = not infAmmo
+    infAmmoBtn.Text = infAmmo and "Vô hạn đạn: BẬT" or "Vô hạn đạn: TẮT"
+end)
+
+-- Tự động đặt đạn liên tục
+game:GetService("RunService").RenderStepped:Connect(function()
+    if infAmmo then
+        local char = player.Character
+        if char then
+            local tool = char:FindFirstChildOfClass("Tool")
+            if tool and tool:FindFirstChild("Ammo") then
+                tool.Ammo.Value = 999999
+            end
+        end
+    end
+end)
