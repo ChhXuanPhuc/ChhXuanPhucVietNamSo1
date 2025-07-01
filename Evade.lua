@@ -1,9 +1,10 @@
--- SpectraPhucHub for Evade - Horizontal UI
--- UI giống TurboLite - Giao diện ngang, chia tab
+-- SpectraPhucHub for Evade - Full CPI Version (Horizontal UI)
+-- Features: ESP (Player + Bot), Infinite Jump, Emote Boost, Auto Respawn, Emote Dash, Logo UI
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
+local RS = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hum = char:WaitForChild("Humanoid")
@@ -23,9 +24,18 @@ Main.Visible = true
 Main.Active = true
 Main.Draggable = true
 
+-- Logo
+local Logo = Instance.new("ImageLabel", Main)
+Logo.Size = UDim2.new(0, 40, 0, 40)
+Logo.Position = UDim2.new(0, 10, 0, -5)
+Logo.BackgroundTransparency = 1
+Logo.Image = "rbxassetid://80557621260986"
+
+-- Title
 local Title = Instance.new("TextLabel", Main)
 Title.Text = "🌟 SpectraPhucHub - Evade 🌟"
-Title.Size = UDim2.new(1,0,0,30)
+Title.Size = UDim2.new(1, -60, 0, 40)
+Title.Position = UDim2.new(0, 60, 0, 0)
 Title.BackgroundTransparency = 1
 Title.TextColor3 = Color3.fromRGB(255,255,0)
 Title.Font = Enum.Font.GothamBold
@@ -34,8 +44,8 @@ Title.TextSize = 20
 local tabs = {"Class Player", "ESP", "System"}
 local tabFrames = {}
 local sidebar = Instance.new("Frame", Main)
-sidebar.Size = UDim2.new(0,120,1,0)
-sidebar.Position = UDim2.new(0,0,0,30)
+sidebar.Size = UDim2.new(0,120,1,-40)
+sidebar.Position = UDim2.new(0,0,0,40)
 sidebar.BackgroundColor3 = Color3.fromRGB(25,25,25)
 
 local function clearTabs()
@@ -69,7 +79,7 @@ for i, tabName in ipairs(tabs) do
 	end
 end
 
--- Class Player Tab
+-- Toggle Generator
 local function createToggle(parent, text, callback)
 	local toggle = Instance.new("TextButton", parent)
 	toggle.Size = UDim2.new(1, -20, 0, 30)
@@ -87,38 +97,36 @@ local function createToggle(parent, text, callback)
 	end)
 end
 
+-- CLASS PLAYER
 local playerTab = tabFrames["Class Player"]
+
 createToggle(playerTab, "Infinite Jump", function(enabled)
+	_G.InfJump = enabled
 	if enabled then
-		_G.InfJump = true
 		UIS.JumpRequest:Connect(function()
 			if _G.InfJump and hum then
 				hum:ChangeState("Jumping")
 			end
 		end)
-	else
-		_G.InfJump = false
 	end
 end)
 
 createToggle(playerTab, "Emote Speed Boost", function(enabled)
+	_G.EmoteSpeed = enabled
 	if enabled then
-		RunService.RenderStepped:Connect(function()
-			if not _G.EmoteSpeed then return end
+		if _G._ConnSpeed then _G._ConnSpeed:Disconnect() end
+		_G._ConnSpeed = RunService.RenderStepped:Connect(function()
 			local animator = hum:FindFirstChildOfClass("Animator")
 			if animator then
+				local playing = false
 				for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-					if track.IsPlaying then
-						hum.WalkSpeed = 70
-						return
-					end
+					if track.IsPlaying then playing = true break end
 				end
+				hum.WalkSpeed = playing and 70 or 16
 			end
-		hum.WalkSpeed = 16
 		end)
-		_G.EmoteSpeed = true
 	else
-		_G.EmoteSpeed = false
+		if _G._ConnSpeed then _G._ConnSpeed:Disconnect() end
 		hum.WalkSpeed = 16
 	end
 end)
@@ -141,25 +149,77 @@ UIS.InputBegan:Connect(function(input, gpe)
 	end
 end)
 
--- ESP Tab (placeholder)
+-- ESP
 local espTab = tabFrames["ESP"]
-createToggle(espTab, "ESP Player", function(state)
-	-- Add your ESP player logic here
-end)
-createToggle(espTab, "ESP Bot", function(state)
-	-- Add your ESP bot logic here
+
+local function highlightObject(obj, color)
+	local box = Instance.new("BoxHandleAdornment")
+	box.Size = Vector3.new(4,5,1)
+	box.Adornee = obj
+	box.AlwaysOnTop = true
+	box.ZIndex = 10
+	box.Color3 = color
+	box.Transparency = 0.3
+	box.Parent = obj
+	return box
+end
+
+local espObjects = {}
+
+task.spawn(function()
+	while task.wait(1) do
+		for _,v in pairs(espObjects) do if v and v.Parent then v:Destroy() end end
+		table.clear(espObjects)
+		if _G.ESPPlayer then
+			for _,plr in pairs(Players:GetPlayers()) do
+				if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					table.insert(espObjects, highlightObject(plr.Character, Color3.fromRGB(0,255,0)))
+				end
+			end
+		end
+		if _G.ESPBot then
+			for _,npc in pairs(workspace:GetDescendants()) do
+				if npc:IsA("Model") and npc:FindFirstChild("Humanoid") and not Players:GetPlayerFromCharacter(npc) then
+					if npc:FindFirstChild("HumanoidRootPart") then
+						table.insert(espObjects, highlightObject(npc, Color3.fromRGB(255,0,0)))
+					end
+				end
+			end
+		end
+	end
 end)
 
--- System Tab
+createToggle(espTab, "ESP Player", function(state)
+	_G.ESPPlayer = state
+end)
+
+createToggle(espTab, "ESP Bot", function(state)
+	_G.ESPBot = state
+end)
+
+-- SYSTEM
 local systemTab = tabFrames["System"]
 createToggle(systemTab, "Auto Respawn", function(enabled)
+	_G.AutoRespawn = enabled
 	if enabled then
 		spawn(function()
-			while wait(1) do
-				if not player.Character or player.Character:FindFirstChild("Downed") then
-					game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Respawn"):FireServer()
+			while _G.AutoRespawn do
+				task.wait(1.5)
+				local char = player.Character
+				if char and char:FindFirstChild("Downed") then
+					local event = RS:FindFirstChild("Events") and RS.Events:FindFirstChild("Respawn")
+					if event then
+						event:FireServer()
+					end
 				end
 			end
 		end)
+	end
+end)
+
+-- Toggle UI
+UIS.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.RightShift then
+		Main.Visible = not Main.Visible
 	end
 end)
