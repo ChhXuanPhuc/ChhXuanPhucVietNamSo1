@@ -155,16 +155,64 @@ infAmmoBtn.MouseButton1Click:Connect(function()
     infAmmo = not infAmmo
     infAmmoBtn.Text = infAmmo and "Vô hạn đạn: BẬT" or "Vô hạn đạn: TẮT"
 end)
+-- Auto Fire
+local autoFire = false
+local autoFireBtn = createButton("🔫 Auto Fire: TẮT", 320)
+autoFireBtn.MouseButton1Click:Connect(function()
+	autoFire = not autoFire
+	autoFireBtn.Text = autoFire and "🔫 Auto Fire: BẬT" or "🔫 Auto Fire: TẮT"
+end)
 
--- Tự động đặt đạn liên tục
+-- Reload Nhanh
+local fastReload = false
+local reloadBtn = createButton("♻️ Reload nhanh: TẮT", 360)
+reloadBtn.MouseButton1Click:Connect(function()
+	fastReload = not fastReload
+	reloadBtn.Text = fastReload and "♻️ Reload nhanh: BẬT" or "♻️ Reload nhanh: TẮT"
+end)
+
+-- Bắn không delay
+local noDelay = false
+local noDelayBtn = createButton("⚡ Bắn nhanh: TẮT", 400)
+noDelayBtn.MouseButton1Click:Connect(function()
+	noDelay = not noDelay
+	noDelayBtn.Text = noDelay and "⚡ Bắn nhanh: BẬT" or "⚡ Bắn nhanh: TẮT"
+end)
+
+-- Hành vi khi giữ súng
 game:GetService("RunService").RenderStepped:Connect(function()
-    if infAmmo then
-        local char = player.Character
-        if char then
-            local tool = char:FindFirstChildOfClass("Tool")
-            if tool and tool:FindFirstChild("Ammo") then
-                tool.Ammo.Value = 999999
-            end
-        end
-    end
+	local char = player.Character
+	if not char then return end
+	local tool = char:FindFirstChildOfClass("Tool")
+	if not tool then return end
+
+	-- Auto Fire
+	if autoFire and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+		if tool:FindFirstChild("Activate") then
+			tool:Activate()
+		elseif tool:FindFirstChildWhichIsA("RemoteEvent") then
+			-- Nếu là remote bắn
+			pcall(function()
+				tool:FindFirstChildWhichIsA("RemoteEvent"):FireServer()
+			end)
+		end
+	end
+
+	-- Reload nhanh nếu hết đạn
+	if fastReload then
+		local ammo = tool:FindFirstChild("Ammo") or tool:FindFirstChild("CurrentAmmo")
+		if ammo and ammo:IsA("IntValue") and ammo.Value <= 0 then
+			local reloadRemote = tool:FindFirstChild("Reload") or tool:FindFirstChildWhichIsA("RemoteEvent")
+			if reloadRemote then
+				pcall(function()
+					reloadRemote:FireServer()
+				end)
+			end
+		end
+	end
+
+	-- Tăng tốc bắn (giảm delay)
+	if noDelay and tool:FindFirstChild("FireRate") then
+		tool.FireRate.Value = 0.05 -- tốc độ cực nhanh
+	end
 end)
