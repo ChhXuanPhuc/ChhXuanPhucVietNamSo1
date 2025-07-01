@@ -1,83 +1,152 @@
--- ✅ World Zero Auto Farm UI - World 1 (Xeno Ready)
--- 📌 Menu bằng RightShift | Auto Mob | Không GUI nặng
+--// WorldZeroHub.lua
+-- ✅ Full Auto Farm World // Zero - World 1 | Xeno Executor | Menu RightShift
 
--- UI Setup (UI gọn, bật bằng RightShift)
-local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
-local RS = game:GetService("RunService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInput = game:GetService("VirtualInputManager")
 local LP = Players.LocalPlayer
-local Char = LP.Character or LP.CharacterAdded:Wait()
-local HRP = Char:WaitForChild("HumanoidRootPart")
+local HRP = LP.Character:WaitForChild("HumanoidRootPart")
 
--- Create UI
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "WZAutoFarmUI"
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 240, 0, 140)
-frame.Position = UDim2.new(0, 20, 0, 200)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BorderSizePixel = 0
-frame.Visible = false
+-- UI Library
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
-title.Text = "World // Zero AutoFarm"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+local Window = OrionLib:MakeWindow({
+    Name = "🌍 WorldZeroHub",
+    HidePremium = false,
+    SaveConfig = false,
+    IntroEnabled = false
+})
 
-local toggleBtn = Instance.new("TextButton", frame)
-toggleBtn.Position = UDim2.new(0, 20, 0, 50)
-toggleBtn.Size = UDim2.new(0, 200, 0, 40)
-toggleBtn.Text = "🟥 Auto Farm: OFF"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 16
+local AutoFarmToggle = false
+local AutoLootToggle = false
+local AutoSkillToggle = false
+local AutoDungeonToggle = false
+local AutoFeedPetToggle = false
 
--- Toggle UI on RightShift
-UIS.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.RightShift then
-        frame.Visible = not frame.Visible
-    end
-end)
-
--- Logic: Auto Farm
-local farming = false
-
-toggleBtn.MouseButton1Click:Connect(function()
-    farming = not farming
-    toggleBtn.Text = farming and "🟩 Auto Farm: ON" or "🟥 Auto Farm: OFF"
-    toggleBtn.BackgroundColor3 = farming and Color3.fromRGB(20, 130, 20) or Color3.fromRGB(50, 50, 50)
-end)
-
--- Get closest valid mob (Health < MaxHealth)
-function getClosestMob()
-    local closest, dist = nil, math.huge
-    for _, mob in pairs(workspace:FindFirstChild("NPC"):GetChildren()) do
-        local hum = mob:FindFirstChild("Humanoid")
-        local root = mob:FindFirstChild("HumanoidRootPart")
-        if hum and root and hum.Health > 0 and hum.MaxHealth > 0 and hum.Health < hum.MaxHealth then
-            local d = (root.Position - HRP.Position).Magnitude
-            if d < dist then
-                closest = mob
-                dist = d
-            end
-        end
-    end
-    return closest
+-- Auto Farm
+function isMob(model)
+	if not model:IsA("Model") then return false end
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	local root = model:FindFirstChild("HumanoidRootPart")
+	if not hum or not root or hum.Health <= 0 then return false end
+	for _, p in pairs(Players:GetPlayers()) do
+		if p.Character == model then return false end
+	end
+	return true
 end
 
--- Auto farm loop
-RS.RenderStepped:Connect(function()
-    if farming and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-        HRP = LP.Character.HumanoidRootPart
-        local mob = getClosestMob()
-        if mob then
-            HRP.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
-            wait(0.1)
-            mouse1click()
-        end
-    end
+function getClosestMob()
+	local closest, dist = nil, math.huge
+	for _, m in pairs(workspace:GetChildren()) do
+		if isMob(m) then
+			local root = m:FindFirstChild("HumanoidRootPart")
+			if root then
+				local d = (HRP.Position - root.Position).Magnitude
+				if d < dist then
+					dist = d
+					closest = root
+				end
+			end
+		end
+	end
+	return closest
+end
+
+task.spawn(function()
+	while task.wait(0.35) do
+		if AutoFarmToggle then
+			local mob = getClosestMob()
+			if mob then
+				local goal = mob.Position + Vector3.new(0, 0, 3)
+				local tween = TweenService:Create(HRP, TweenInfo.new(0.25), {CFrame = CFrame.new(goal)})
+				tween:Play()
+				task.wait(0.3)
+				VirtualInput:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+				VirtualInput:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+			end
+		end
+	end
 end)
+
+-- Auto Loot
+task.spawn(function()
+	while task.wait(0.2) do
+		if AutoLootToggle then
+			VirtualInput:SendKeyEvent(true, "E", false, game)
+			task.wait(0.1)
+			VirtualInput:SendKeyEvent(false, "E", false, game)
+		end
+	end
+end)
+
+-- Auto Skill (Q E R)
+task.spawn(function()
+	while task.wait(1) do
+		if AutoSkillToggle then
+			for _, key in pairs({"Q", "E", "R"}) do
+				VirtualInput:SendKeyEvent(true, key, false, game)
+				task.wait(0.1)
+				VirtualInput:SendKeyEvent(false, key, false, game)
+			end
+		end
+	end
+end)
+
+-- Auto Pet Feed
+task.spawn(function()
+	while task.wait(3) do
+		if AutoFeedPetToggle then
+			VirtualInput:SendKeyEvent(true, "T", false, game)
+			task.wait(0.1)
+			VirtualInput:SendKeyEvent(false, "T", false, game)
+		end
+	end
+end)
+
+-- Auto Dungeon (simple loop press F to join)
+task.spawn(function()
+	while task.wait(1) do
+		if AutoDungeonToggle then
+			VirtualInput:SendKeyEvent(true, "F", false, game)
+			task.wait(0.1)
+			VirtualInput:SendKeyEvent(false, "F", false, game)
+		end
+	end
+end)
+
+-- UI Tabs
+local tab = Window:MakeTab({Name = "Auto Farm", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+
+tab:AddToggle({
+	Name = "🤖 Auto Farm Quái",
+	Default = false,
+	Callback = function(v) AutoFarmToggle = v end
+})
+
+tab:AddToggle({
+	Name = "💰 Auto Loot (E)",
+	Default = false,
+	Callback = function(v) AutoLootToggle = v end
+})
+
+tab:AddToggle({
+	Name = "⚔️ Auto Skill Q E R",
+	Default = false,
+	Callback = function(v) AutoSkillToggle = v end
+})
+
+tab:AddToggle({
+	Name = "🐾 Auto Feed Pet (T)",
+	Default = false,
+	Callback = function(v) AutoFeedPetToggle = v end
+})
+
+tab:AddToggle({
+	Name = "🏰 Auto Join Dungeon (F)",
+	Default = false,
+	Callback = function(v) AutoDungeonToggle = v end
+})
+
+OrionLib:Init()
