@@ -1,0 +1,150 @@
+-- Khởi tạo UI
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "SpectraPhucHub"
+gui.ResetOnSpawn = false
+
+-- Frame chính
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 250, 0, 300)
+main.Position = UDim2.new(0, 20, 0.5, -150)
+main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+main.Visible = true
+main.Active = true
+main.Draggable = true
+
+local corner = Instance.new("UICorner", main)
+corner.CornerRadius = UDim.new(0, 12)
+
+-- Tiêu đề
+local title = Instance.new("TextLabel", main)
+title.Text = "🌟 SpectraPhucHub 🌟"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+
+-- Ảnh góc (logo nhỏ)
+local image = Instance.new("ImageLabel", main)
+image.Size = UDim2.new(0, 28, 0, 28)
+image.Position = UDim2.new(0, 5, 0, 2)
+image.Image = "rbxassetid://7072718365" -- Logo Roblox/ảnh bất kỳ
+image.BackgroundTransparency = 1
+
+-- Các nút và textbox
+local function createButton(text, positionY)
+	local btn = Instance.new("TextButton", main)
+	btn.Size = UDim2.new(0, 220, 0, 30)
+	btn.Position = UDim2.new(0, 15, 0, positionY)
+	btn.Text = text
+	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 14
+	local c = Instance.new("UICorner", btn)
+	c.CornerRadius = UDim.new(0, 6)
+	return btn
+end
+
+local function createBox(placeholder, positionY)
+	local box = Instance.new("TextBox", main)
+	box.Size = UDim2.new(0, 220, 0, 30)
+	box.Position = UDim2.new(0, 15, 0, positionY)
+	box.Text = placeholder
+	box.ClearTextOnFocus = false
+	box.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+	box.TextColor3 = Color3.new(1, 1, 1)
+	box.Font = Enum.Font.Gotham
+	box.TextSize = 14
+	local c = Instance.new("UICorner", box)
+	c.CornerRadius = UDim.new(0, 6)
+	return box
+end
+
+local flyBtn = createButton("Fly: OFF", 40)
+local speedBox = createBox("WalkSpeed: 100", 80)
+local jumpBox = createBox("JumpPower: 100", 120)
+local setBtn = createButton("Áp dụng Speed + Jump", 160)
+local ijBtn = createButton("Infinite Jump: OFF", 200)
+local closeBtn = createButton("Đóng menu (RightShift)", 240)
+
+-- Fly
+local flying = false
+local flyBody = nil
+flyBtn.MouseButton1Click:Connect(function()
+	flying = not flying
+	flyBtn.Text = flying and "Fly: ON" or "Fly: OFF"
+
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	if flying then
+		flyBody = Instance.new("BodyVelocity")
+		flyBody.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		flyBody.Velocity = Vector3.new()
+		flyBody.Parent = hrp
+
+		game:GetService("RunService").Heartbeat:Connect(function()
+			if flying and flyBody and hrp then
+				local dir = Vector3.zero
+				if UIS:IsKeyDown(Enum.KeyCode.W) then dir += workspace.CurrentCamera.CFrame.LookVector end
+				if UIS:IsKeyDown(Enum.KeyCode.S) then dir -= workspace.CurrentCamera.CFrame.LookVector end
+				if UIS:IsKeyDown(Enum.KeyCode.A) then dir -= workspace.CurrentCamera.CFrame.RightVector end
+				if UIS:IsKeyDown(Enum.KeyCode.D) then dir += workspace.CurrentCamera.CFrame.RightVector end
+				if UIS:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0,1,0) end
+				if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.new(0,1,0) end
+				if dir.Magnitude > 0 then
+					flyBody.Velocity = dir.Unit * 100
+				else
+					flyBody.Velocity = Vector3.zero
+				end
+			end
+		end)
+	else
+		if flyBody then flyBody:Destroy() end
+	end
+end)
+
+-- Set speed/jump
+setBtn.MouseButton1Click:Connect(function()
+	local hum = player.Character and player.Character:FindFirstChildWhichIsA("Humanoid")
+	if hum then
+		hum.WalkSpeed = tonumber(speedBox.Text:match("%d+")) or 100
+		hum.JumpPower = tonumber(jumpBox.Text:match("%d+")) or 100
+	end
+end)
+
+-- Infinite Jump
+local infiniteJump = false
+ijBtn.MouseButton1Click:Connect(function()
+	infiniteJump = not infiniteJump
+	ijBtn.Text = infiniteJump and "Infinite Jump: ON" or "Infinite Jump: OFF"
+end)
+
+UIS.JumpRequest:Connect(function()
+	if infiniteJump then
+		local hum = player.Character and player.Character:FindFirstChildWhichIsA("Humanoid")
+		if hum then
+			hum:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end
+end)
+
+-- Toggle menu bằng RightShift
+local visible = true
+UIS.InputBegan:Connect(function(input, gp)
+	if not gp and input.KeyCode == Enum.KeyCode.RightShift then
+		visible = not visible
+		main.Visible = visible
+	end
+end)
+
+-- Nút đóng
+closeBtn.MouseButton1Click:Connect(function()
+	visible = false
+	main.Visible = false
+end)
