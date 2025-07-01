@@ -1,0 +1,179 @@
+-- SpectraPhucHub UI Evade Full Script
+-- By ChatGPT x ChhXuanPhuc
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
+local lp = Players.LocalPlayer
+
+-- Lib UI
+local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/UiLibDev/Turbo-Lite-UI/main/source.lua"))()
+local win = lib:CreateWindow("SpectraPhucHub")
+win:ToggleKey(Enum.KeyCode.RightShift)
+
+-- Tabs
+local tab_player = win:CreateTab("⚙️ Class Player")
+local tab_esp = win:CreateTab("🧠 ESP")
+local tab_system = win:CreateTab("🚨 System")
+
+-- Vars
+local flyToggle, infiniteJumpToggle, wsValue, jpValue, emoteSpeedToggle = false, false, 16, 50, false
+
+-- Class Player Tab
+tab_player:AddToggle("WalkSpeed", function(t)
+    flyToggle = t
+end)
+tab_player:AddBox("Speed Value", function(txt)
+    wsValue = tonumber(txt) or 16
+end)
+
+tab_player:AddToggle("JumpPower", function(t)
+    jpValue = t and 50 or 50
+end)
+tab_player:AddBox("Jump Power Value", function(txt)
+    jpValue = tonumber(txt) or 50
+end)
+
+tab_player:AddToggle("Infinite Jump", function(t)
+    infiniteJumpToggle = t
+end)
+
+-- Emote Speed Boost
+local emoteBoosting = false
+tab_player:AddToggle("Tăng tốc khi emote", function(t)
+    emoteSpeedToggle = t
+end)
+
+-- Emote Dash
+tab_player:AddButton("Emote Dash (phím V)", function()
+    uis.InputBegan:Connect(function(input, gpe)
+        if input.KeyCode == Enum.KeyCode.V then
+            local char = lp.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hum = char:FindFirstChildWhichIsA("Humanoid")
+                local hrp = char.HumanoidRootPart
+                hum.PlatformStand = true
+                local bv = Instance.new("BodyVelocity", hrp)
+                bv.Velocity = hrp.CFrame.LookVector * 100 + Vector3.new(0, 30, 0)
+                bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+                game.Debris:AddItem(bv, 0.35)
+                task.wait(0.35)
+                hum.PlatformStand = false
+            end
+        end
+    end)
+end)
+
+-- ESP Tab
+tab_esp:AddToggle("ESP Player", function(state)
+    local function createESP(char)
+        if char:FindFirstChild("Head") and not char:FindFirstChild("SpectraESP") then
+            local box = Instance.new("BoxHandleAdornment", char)
+            box.Name = "SpectraESP"
+            box.Adornee = char
+            box.Size = char:GetExtentsSize()
+            box.Color3 = Color3.fromRGB(0,255,0)
+            box.AlwaysOnTop = true
+            box.ZIndex = 5
+            box.Transparency = 0.5
+        end
+    end
+
+    if state then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= lp and plr.Character then
+                createESP(plr.Character)
+            end
+        end
+        Players.PlayerAdded:Connect(function(plr)
+            plr.CharacterAdded:Connect(function(char)
+                wait(1)
+                createESP(char)
+            end)
+        end)
+    else
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= lp and plr.Character and plr.Character:FindFirstChild("SpectraESP") then
+                plr.Character.SpectraESP:Destroy()
+            end
+        end
+    end
+end)
+
+tab_esp:AddToggle("ESP Bot", function(state)
+    RunService.RenderStepped:Connect(function()
+        for _, bot in pairs(workspace:GetDescendants()) do
+            if bot:FindFirstChild("HumanoidRootPart") and not bot:FindFirstChild("SpectraBOT") and tostring(bot) == "NPC" and state then
+                local box = Instance.new("BoxHandleAdornment", bot)
+                box.Name = "SpectraBOT"
+                box.Adornee = bot
+                box.Size = bot:GetExtentsSize()
+                box.Color3 = Color3.fromRGB(255,0,0)
+                box.AlwaysOnTop = true
+                box.ZIndex = 5
+                box.Transparency = 0.5
+            elseif not state and bot:FindFirstChild("SpectraBOT") then
+                bot.SpectraBOT:Destroy()
+            end
+        end
+    end)
+end)
+
+-- System Tab
+tab_system:AddToggle("Auto Respawn (Gục)", function(t)
+    if t then
+        RunService.RenderStepped:Connect(function()
+            pcall(function()
+                if lp.Character:FindFirstChild("Dead") then
+                    firetouchinterest(lp.Character:FindFirstChild("HumanoidRootPart"), workspace.Lobby.Spawn, 0)
+                    wait()
+                    firetouchinterest(lp.Character:FindFirstChild("HumanoidRootPart"), workspace.Lobby.Spawn, 1)
+                end
+            end)
+        end)
+    end
+end)
+
+tab_system:AddButton("FPS Boost", function()
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("BasePart") and not v:IsA("MeshPart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+        elseif v:IsA("Decal") or v:IsA("Texture") then
+            v:Destroy()
+        end
+    end
+    settings().Rendering.QualityLevel = "Level01"
+end)
+
+-- Logic
+RunService.RenderStepped:Connect(function()
+    local char = lp.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+
+    -- WalkSpeed & JumpPower
+    if flyToggle and hum then hum.WalkSpeed = wsValue end
+    if jpValue and hum then hum.JumpPower = jpValue end
+
+    -- Infinite Jump
+    if infiniteJumpToggle then
+        uis.JumpRequest:Connect(function()
+            if hum and hum:GetState() ~= Enum.HumanoidStateType.Seated then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+    end
+
+    -- Emote Speed Boost
+    if emoteSpeedToggle then
+        local animator = hum:FindFirstChildOfClass("Animator")
+        if animator then
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                if track.IsPlaying and hum.WalkSpeed < 60 then
+                    hum.WalkSpeed = 70
+                end
+            end
+        end
+    end
+end)
