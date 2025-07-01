@@ -9,7 +9,7 @@ gui.ResetOnSpawn = false
 
 -- Frame chính
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 250, 0, 300)
+main.Size = UDim2.new(0, 250, 0, 440)
 main.Position = UDim2.new(0, 20, 0.5, -150)
 main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 main.Visible = true
